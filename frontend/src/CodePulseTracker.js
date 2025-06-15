@@ -3,6 +3,275 @@ import { Calendar, CheckCircle, Circle, Plus, BookOpen, Target, Code, Clock, Bel
 import { format, differenceInDays, addDays, parseISO } from 'date-fns';
 import AuthPage from './AuthPage'; // ADD THIS IMPORT AT THE TOP
 import problemsData from './problems.json';
+// LeetCode-style Heatmap Component
+const ActivityHeatmap = React.memo(({ problems, isDarkMode }) => {
+    // Get the last 3 months (current + past 2 months)
+    const getThreeMonthsDays = () => {
+        const days = [];
+        const today = new Date();
+        
+        // Get first day of 3 months ago
+        const threeMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+        
+        // Calculate total days from 3 months ago to today
+        const totalDays = Math.ceil((today - threeMonthsAgo) / (1000 * 60 * 60 * 24)) + 1;
+        
+        for (let i = totalDays - 1; i >= 0; i--) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - i);
+            days.push(date);
+        }
+        return days;
+    };
+
+    // Count problems solved per day
+    const getActivityData = () => {
+        const activityMap = {};
+        
+        problems.forEach(problem => {
+            if (problem.status === 'completed' && problem.lastReviewed) {
+                const date = new Date(problem.lastReviewed);
+                const dateKey = date.toDateString();
+                activityMap[dateKey] = (activityMap[dateKey] || 0) + 1;
+            }
+        });
+        
+        return activityMap;
+    };
+
+    // Get intensity level based on problem count
+    const getIntensity = (count) => {
+        if (count === 0) return 0;
+        if (count <= 2) return 1;
+        if (count <= 4) return 2;
+        if (count <= 7) return 3;
+        return 4;
+    };
+
+    // Simplified color scheme that works reliably
+    const getColorClass = (intensity) => {
+        if (isDarkMode) {
+            const colors = [
+                'bg-gray-800 border-gray-700', // 0 contributions
+                'bg-green-900 border-green-800', // 1-2 contributions
+                'bg-green-700 border-green-600', // 3-4 contributions
+                'bg-green-500 border-green-400', // 5-7 contributions
+                'bg-green-400 border-green-300'  // 8+ contributions
+            ];
+            return colors[intensity];
+        } else {
+            const colors = [
+                'bg-gray-100 border-gray-200', // 0 contributions
+                'bg-green-100 border-green-200', // 1-2 contributions
+                'bg-green-300 border-green-400', // 3-4 contributions
+                'bg-green-500 border-green-600', // 5-7 contributions
+                'bg-green-700 border-green-800'  // 8+ contributions
+            ];
+            return colors[intensity];
+        }
+    };
+
+    const days = getThreeMonthsDays();
+    const activityData = getActivityData();
+    const totalSolved = problems.filter(p => p.status === 'completed').length;
+    
+    // Group days by weeks starting with Monday
+    const weeks = [];
+    let currentWeek = [];
+    
+    days.forEach((day, index) => {
+        if (index === 0) {
+            // Add empty cells for the first week if it doesn't start on Monday
+            const dayOfWeek = (day.getDay() + 6) % 7; // Convert to Monday=0
+            for (let i = 0; i < dayOfWeek; i++) {
+                currentWeek.push(null);
+            }
+        }
+        
+        currentWeek.push(day);
+        
+        if (currentWeek.length === 7) {
+            weeks.push(currentWeek);
+            currentWeek = [];
+        }
+    });
+    
+    // Add remaining days to the last week
+    if (currentWeek.length > 0) {
+        while (currentWeek.length < 7) {
+            currentWeek.push(null);
+        }
+        weeks.push(currentWeek);
+    }
+
+    // Get month labels for the visible period
+    const getVisibleMonths = () => {
+        const months = [];
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        
+        if (days.length > 0) {
+            const firstDay = days[0];
+            const lastDay = days[days.length - 1];
+            
+            let currentMonth = firstDay.getMonth();
+            let currentYear = firstDay.getFullYear();
+            
+            while (currentYear < lastDay.getFullYear() || 
+                   (currentYear === lastDay.getFullYear() && currentMonth <= lastDay.getMonth())) {
+                months.push(monthNames[currentMonth]);
+                currentMonth++;
+                if (currentMonth > 11) {
+                    currentMonth = 0;
+                    currentYear++;
+                }
+            }
+        }
+        
+        return months;
+    };
+
+    const visibleMonths = getVisibleMonths();
+    const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    // Calculate streak
+    const getCurrentStreak = () => {
+        let streak = 0;
+        const sortedDays = [...days].reverse();
+        
+        for (const day of sortedDays) {
+            const dateKey = day.toDateString();
+            if (activityData[dateKey] > 0) {
+                streak++;
+            } else {
+                break;
+            }
+        }
+        return streak;
+    };
+
+    const currentStreak = getCurrentStreak();
+
+    return (
+        <div className={`p-4 sm:p-6 rounded-lg shadow transition-colors duration-300 ${
+            isDarkMode ? 'bg-gray-800' : 'bg-white'
+        }`}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                <div>
+                    <h3 className={`text-lg font-semibold mb-1 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                        Coding Activity
+                    </h3>
+                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        Last 3 months of problem solving
+                    </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 text-sm">
+                    <div className={`px-3 py-1 rounded-full font-medium ${
+                        isDarkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800'
+                    }`}>
+                        {totalSolved} problems solved
+                    </div>
+                    <div className={`px-3 py-1 rounded-full font-medium ${
+                        isDarkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-800'
+                    }`}>
+                        {currentStreak} day streak
+                    </div>
+                </div>
+            </div>
+            
+            {/* Heatmap Grid */}
+            <div className="overflow-x-auto">
+                <div className="inline-block min-w-full">
+                    {/* Month labels */}
+                    <div className="flex mb-3 ml-10">
+                        {visibleMonths.map((month, i) => (
+                            <div key={i} className="flex-1 min-w-0">
+                                <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                    {month}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                    
+                    <div className="flex">
+                        {/* Day labels */}
+                        <div className="flex flex-col mr-3">
+                            {dayLabels.map((day, index) => (
+                                <div key={day} className="h-4 mb-1 flex items-center">
+                                    {index % 2 === 0 && (
+                                        <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                            {day}
+                                        </span>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                        
+                        {/* Heatmap cells */}
+                        <div className="flex gap-1">
+                            {weeks.map((week, weekIndex) => (
+                                <div key={weekIndex} className="flex flex-col gap-1">
+                                    {week.map((day, dayIndex) => {
+                                        if (!day) {
+                                            return <div key={dayIndex} className="w-3 h-3" />;
+                                        }
+                                        
+                                        const dateKey = day.toDateString();
+                                        const count = activityData[dateKey] || 0;
+                                        const intensity = getIntensity(count);
+                                        const isToday = day.toDateString() === new Date().toDateString();
+                                        
+                                        return (
+                                            <div
+                                                key={dayIndex}
+                                                className={`w-3 h-3 rounded-sm cursor-pointer transition-all duration-200 hover:scale-110 border ${
+                                                    getColorClass(intensity)
+                                                } ${isToday ? 'ring-2 ring-blue-400' : ''}`}
+                                                title={`${day.toLocaleDateString('en-US', { 
+                                                    weekday: 'long', 
+                                                    year: 'numeric', 
+                                                    month: 'long', 
+                                                    day: 'numeric' 
+                                                })}: ${count} problem${count !== 1 ? 's' : ''} solved`}
+                                            />
+                                        );
+                                    })}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {/* Legend */}
+            <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 text-sm">
+                    <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
+                        Less
+                    </span>
+                    <div className="flex items-center gap-1">
+                        {[0, 1, 2, 3, 4].map(intensity => (
+                            <div
+                                key={intensity}
+                                className={`w-3 h-3 rounded-sm border ${getColorClass(intensity)}`}
+                                title={`${intensity === 0 ? '0' : intensity === 1 ? '1-2' : intensity === 2 ? '3-4' : intensity === 3 ? '5-7' : '8+'} problems`}
+                            />
+                        ))}
+                    </div>
+                    <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
+                        More
+                    </span>
+                </div>
+                
+                <div className={`text-xs ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>
+                    Week starts on Monday
+                </div>
+            </div>
+        </div>
+    );
+});
+
 
 // (Highly Recommended) Component moved outside of the main StudyPlanner component for performance.
 const SpacedRepetitionList = React.memo(({ problems, isDarkMode }) => {
@@ -623,7 +892,8 @@ const SetupForm = ({ isDarkMode, formData, setFormData, handleFormSubmit, availa
 
 // (Highly Recommended) Component moved outside of the main StudyPlanner component for performance.
 // (Highly Recommended) Component moved outside of the main StudyPlanner component for performance.
-const Dashboard = ({ isDarkMode, stats, spacedRepetition }) => {
+const Dashboard = ({ isDarkMode, stats, spacedRepetition, problems }) => {
+
     // LeetCode-style progress bar for a specific difficulty
     const DifficultyProgressBar = ({ difficulty, data, colorClass }) => (
         <div>
@@ -653,6 +923,7 @@ const Dashboard = ({ isDarkMode, stats, spacedRepetition }) => {
                         <Target className="text-blue-500" size={24} />
                     </div>
                 </div>
+                
                 <div className={`p-4 sm:p-6 rounded-lg shadow transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                     <div className="flex items-center justify-between">
                         <div>
@@ -711,6 +982,7 @@ const Dashboard = ({ isDarkMode, stats, spacedRepetition }) => {
                     <DifficultyProgressBar difficulty="Hard" data={stats.hard} colorClass="bg-red-500" />
                 </div>
             </div>
+            <ActivityHeatmap problems={problems} isDarkMode={isDarkMode} />
 
             <SpacedRepetitionList problems={spacedRepetition} isDarkMode={isDarkMode} />
         </div>
@@ -1601,15 +1873,17 @@ const StudyPlanner = ({onLogout, user}) => {
                     availableTopics={availableTopics}
                 />}
                 {activeTab === 'dashboard' && studyPlan && (() => {
-                    const problemsForReview = problems.filter(p => p.status === 'completed' && p.lastReviewed);
-                    return (
-                        <Dashboard
-                            isDarkMode={isDarkMode}
-                            stats={getProgressStats()}
-                            spacedRepetition={problemsForReview}
-                        />
-                    );
-                })()}
+    const problemsForReview = problems.filter(p => p.status === 'completed' && p.lastReviewed);
+    return (
+        <Dashboard
+            isDarkMode={isDarkMode}
+            stats={getProgressStats()}
+            spacedRepetition={problemsForReview}
+            problems={problems} // Add this line
+        />
+    );
+})()}
+
                 {activeTab === 'tasks' && studyPlan && <TaskManager
                     studyPlan={studyPlan}
                     addCustomProblem={addCustomProblem}
