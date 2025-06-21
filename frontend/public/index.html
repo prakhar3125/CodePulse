@@ -1,44 +1,197 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Essential Meta Tags -->
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#1f2937" />
+    
+    <!-- SEO Meta Tags -->
+    <title>CodePulse - Your Personalized Coding Progress Tracker</title>
     <meta
       name="description"
-      content="Web site created using create-react-app"
+      content="Master technical interviews with CodePulse - your personalized study companion featuring intelligent tracking, spaced repetition, and comprehensive coding practice plans."
     />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
+    <meta 
+      name="keywords" 
+      content="coding interview, leetcode tracker, programming practice, technical interview prep, coding progress, algorithm practice, data structures"
+    />
+    <meta name="author" content="CodePulse Team" />
+    
+    <!-- Open Graph Meta Tags for Social Sharing -->
+    <meta property="og:title" content="CodePulse - Personalized Coding Progress Tracker" />
+    <meta property="og:description" content="Accelerate your coding interview preparation with personalized plans and intelligent tracking." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://codepulse.app" />
+    <meta property="og:image" content="%PUBLIC_URL%/logo.jpg" />
+    <meta property="og:site_name" content="CodePulse" />
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="CodePulse - Personalized Coding Progress Tracker" />
+    <meta name="twitter:description" content="Master technical interviews with personalized study plans and intelligent tracking." />
+    <meta name="twitter:image" content="%PUBLIC_URL%/logo.jpg" />
+    
+    <!-- Favicon and App Icons - Updated to use logo.jpg -->
+    <link rel="icon" href="%PUBLIC_URL%/logo.jpg" type="image/jpeg" />
+    <link rel="shortcut icon" href="%PUBLIC_URL%/logo.jpg" type="image/jpeg" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo.jpg" />
+    <link rel="apple-touch-icon" sizes="57x57" href="%PUBLIC_URL%/logo.jpg" />
+    <link rel="apple-touch-icon" sizes="60x60" href="%PUBLIC_URL%/logo.jpg" />
+    <link rel="apple-touch-icon" sizes="72x72" href="%PUBLIC_URL%/logo.jpg" />
+    <link rel="apple-touch-icon" sizes="76x76" href="%PUBLIC_URL%/logo.jpg" />
+    <link rel="apple-touch-icon" sizes="114x114" href="%PUBLIC_URL%/logo.jpg" />
+    <link rel="apple-touch-icon" sizes="120x120" href="%PUBLIC_URL%/logo.jpg" />
+    <link rel="apple-touch-icon" sizes="144x144" href="%PUBLIC_URL%/logo.jpg" />
+    <link rel="apple-touch-icon" sizes="152x152" href="%PUBLIC_URL%/logo.jpg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="%PUBLIC_URL%/logo.jpg" />
+    
+    <!-- Android/Chrome Icons -->
+    <link rel="icon" type="image/jpeg" sizes="16x16" href="%PUBLIC_URL%/logo.jpg" />
+    <link rel="icon" type="image/jpeg" sizes="32x32" href="%PUBLIC_URL%/logo.jpg" />
+    <link rel="icon" type="image/jpeg" sizes="96x96" href="%PUBLIC_URL%/logo.jpg" />
+    <link rel="icon" type="image/jpeg" sizes="192x192" href="%PUBLIC_URL%/logo.jpg" />
+    
+    <!-- Web App Manifest -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
-
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>React App</title>
+    
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    
+    <!-- Preconnect to External Domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Google Fonts for Better Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Additional Performance Optimizations -->
+    <link rel="dns-prefetch" href="//googleapis.com">
+    <link rel="dns-prefetch" href="//google-analytics.com">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="application-name" content="CodePulse" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="CodePulse" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="msapplication-TileColor" content="#1f2937" />
+    <meta name="msapplication-TileImage" content="%PUBLIC_URL%/logo.jpg" />
+    <meta name="msapplication-config" content="%PUBLIC_URL%/browserconfig.xml" />
+    
+    <!-- Custom Styles for Initial Loading -->
+    <style>
+      /* Custom font family using Inter */
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      }
+      
+      /* Loading spinner for better UX */
+      .loading-spinner {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        border: 3px solid #f3f3f3;
+        border-radius: 50%;
+        border-top-color: #3b82f6;
+        animation: spin 1s ease-in-out infinite;
+      }
+      
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      
+      /* Initial loading screen */
+      .loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        color: white;
+      }
+      
+      .loading-logo {
+        width: 80px;
+        height: 80px;
+        background-image: url('%PUBLIC_URL%/logo.jpg');
+        background-size: cover;
+        background-position: center;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      }
+      
+      .loading-text {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+    </style>
   </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
+  
+  <body class="bg-gray-900">
+    <!-- No JavaScript Fallback -->
+    <noscript>
+      <div style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #1f2937;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 2rem;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      ">
+        <img src="%PUBLIC_URL%/logo.jpg" alt="CodePulse Logo" style="width: 64px; height: 64px; border-radius: 8px; margin-bottom: 1rem;" />
+        <h1 style="font-size: 2rem; margin-bottom: 1rem; color: #3b82f6;">CodePulse</h1>
+        <p style="font-size: 1.2rem; margin-bottom: 1rem;">JavaScript is required to run this application.</p>
+        <p style="color: #9ca3af;">Please enable JavaScript in your browser settings and refresh the page.</p>
+      </div>
+    </noscript>
+    
+    <!-- Initial Loading Screen -->
+    <div id="initial-loader" class="loading-screen">
+      <div class="loading-logo"></div>
+      <div class="loading-text">CodePulse</div>
+      <div class="loading-spinner"></div>
+      <p style="margin-top: 1rem; color: #9ca3af;">Loading your coding journey...</p>
+    </div>
+    
+    <!-- React Root Element -->
     <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
-
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
-
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
+    
+    <!-- Hide loading screen once React loads -->
+    <script>
+      // Hide initial loader once React renders
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          const loader = document.getElementById('initial-loader');
+          if (loader) {
+            loader.style.opacity = '0';
+            loader.style.transition = 'opacity 0.5s ease-out';
+            setTimeout(() => {
+              loader.style.display = 'none';
+            }, 500);
+          }
+        }, 100);
+      });
+    </script>
   </body>
 </html>
