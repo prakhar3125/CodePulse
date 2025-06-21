@@ -307,19 +307,18 @@ const formatDate = (date) => {
         </section>
 
         {/* How It Works Section */}
-       <section id="how-it-works" className="py-20 bg-gray-900/50">
+     <section id="how-it-works" className="py-20 bg-gray-900/50">
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div className="text-center mb-16">
       <h2 className="text-4xl font-bold text-white mb-4">Get Started in 3 Easy Steps</h2>
       <p className="text-xl text-gray-400">Begin your journey to algorithm mastery in minutes.</p>
     </div>
 
-    <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-4">
+    <div className="flex flex-col lg:flex-row items-center justify-center gap-8">
       {/* Step 1 */}
       <div className="flex-1 max-w-sm">
         <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-gray-700 h-full text-center group hover:border-blue-500/30 transition-all duration-300">
           <div className="w-16 h-16 bg-blue-500/20 rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:bg-blue-500/30 transition-colors duration-300">
-            {/* Assuming 'Target' is a valid icon component */}
             <Target className="h-8 w-8 text-blue-400" />
           </div>
           <h3 className="text-2xl font-bold text-white mb-4">Select Your Topics</h3>
@@ -329,21 +328,10 @@ const formatDate = (date) => {
         </div>
       </div>
 
-      {/* Arrow 1 - FIXED */}
-      <div className="flex items-center justify-center lg:mx-4">
-        <svg className="hidden lg:block w-16 h-16 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-        </svg>
-        <svg className="lg:hidden w-12 h-12 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 17l4 4m0 0l4-4m-4 4V3" />
-        </svg>
-      </div>
-
       {/* Step 2 */}
       <div className="flex-1 max-w-sm">
         <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-gray-700 h-full text-center group hover:border-purple-500/30 transition-all duration-300">
           <div className="w-16 h-16 bg-purple-500/20 rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:bg-purple-500/30 transition-colors duration-300">
-            {/* Assuming 'Brain' is a valid icon component */}
             <Brain className="h-8 w-8 text-purple-400" />
           </div>
           <h3 className="text-2xl font-bold text-white mb-4">Generate Your Plan</h3>
@@ -353,21 +341,10 @@ const formatDate = (date) => {
         </div>
       </div>
 
-      {/* Arrow 2 - FIXED */}
-      <div className="flex items-center justify-center lg:mx-4">
-        <svg className="hidden lg:block w-16 h-16 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-        </svg>
-        <svg className="lg:hidden w-12 h-12 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 17l4 4m0 0l4-4m-4 4V3" />
-        </svg>
-      </div>
-
       {/* Step 3 */}
       <div className="flex-1 max-w-sm">
         <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-gray-700 h-full text-center group hover:border-green-500/30 transition-all duration-300">
           <div className="w-16 h-16 bg-green-500/20 rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:bg-green-500/30 transition-colors duration-300">
-            {/* Assuming 'CheckCircle' is a valid icon component */}
             <CheckCircle className="h-8 w-8 text-green-400" />
           </div>
           <h3 className="text-2xl font-bold text-white mb-4">Track and Learn</h3>
@@ -379,6 +356,7 @@ const formatDate = (date) => {
     </div>
   </div>
 </section>
+
 
 
         {/* Trust Section */}
