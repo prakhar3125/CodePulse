@@ -5,6 +5,17 @@ import { jwtDecode } from 'jwt-decode';
 
 const LandingPage = ({ onAuthSuccess, isDarkMode }) => {
   const googleClientId = "994245990983-m5le37sunadq280ggv4vqrqt98m3ljch.apps.googleusercontent.com";
+  const [currentDate] = useState(new Date());
+
+const formatDate = (date) => {
+  const options = { 
+    weekday: 'short', 
+    month: 'short', 
+    day: 'numeric',
+    year: 'numeric'
+  };
+  return date.toLocaleDateString('en-US', options);
+};
 
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -186,14 +197,15 @@ const LandingPage = ({ onAuthSuccess, isDarkMode }) => {
               {/* Right Column - Dashboard Preview */}
               <div className="relative">
                 <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700 shadow-2xl">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-semibold text-white">Today's Plan</h3>
-                    <div className="flex space-x-2">
-                      <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-                      <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                      <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                    </div>
-                  </div>
+                 <div className="flex items-center justify-between mb-6">
+  <h3 className="text-lg font-semibold text-white">{formatDate(currentDate)}</h3>
+  <div className="flex space-x-2">
+    <div className="w-3 h-3 bg-red-400 rounded-full"></div>
+    <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+    <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+  </div>
+</div>
+
                   
                   <div className="space-y-4">
                     <div className="flex justify-between items-center p-3 bg-gray-700/50 rounded-lg">
