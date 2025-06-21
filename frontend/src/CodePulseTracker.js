@@ -277,11 +277,7 @@ const ActivityHeatmap = React.memo(({ problems, isDarkMode }) => {
                         </span>
                     </div>
                     
-                    <div className={`text-xs transition-colors duration-300 ${
-                        isDarkMode ? 'text-white' : 'text-gray-500'
-                    }`}>
-                        GitHub-style contribution graph
-                    </div>
+                   
                 </div>
             </div>
         </div>
