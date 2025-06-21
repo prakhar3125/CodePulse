@@ -5,41 +5,86 @@ import AuthPage from './AuthPage'; // ADD THIS IMPORT AT THE TOP
 import problemsData from './problems.json';
 // LeetCode-style Heatmap Component
 const ActivityHeatmap = React.memo(({ problems, isDarkMode }) => {
-    // Get the last 3 months (current + past 2 months)
-    const getThreeMonthsDays = () => {
-        const days = [];
-        const today = new Date();
-        
-        // Get first day of 3 months ago
-        const threeMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 2, 1);
-        
-        // Calculate total days from 3 months ago to today
-        const totalDays = Math.ceil((today - threeMonthsAgo) / (1000 * 60 * 60 * 24)) + 1;
-        
-        for (let i = totalDays - 1; i >= 0; i--) {
-            const date = new Date(today);
-            date.setDate(date.getDate() - i);
-            days.push(date);
-        }
-        return days;
-    };
-
-    // Count problems solved per day
+    // Get activity data from completed problems
     const getActivityData = () => {
         const activityMap = {};
         
+        if (!Array.isArray(problems)) return activityMap;
+        
         problems.forEach(problem => {
             if (problem.status === 'completed' && problem.lastReviewed) {
-                const date = new Date(problem.lastReviewed);
-                const dateKey = date.toDateString();
-                activityMap[dateKey] = (activityMap[dateKey] || 0) + 1;
+                try {
+                    let date = typeof problem.lastReviewed === 'string' 
+                        ? new Date(problem.lastReviewed) 
+                        : problem.lastReviewed;
+                    
+                    if (isNaN(date.getTime())) return;
+                    
+                    const normalizedDate = new Date(date);
+                    normalizedDate.setHours(0, 0, 0, 0);
+                    const dateKey = normalizedDate.toDateString();
+                    activityMap[dateKey] = (activityMap[dateKey] || 0) + 1;
+                } catch (error) {
+                    console.error('Error processing date:', error);
+                }
             }
         });
         
         return activityMap;
     };
 
-    // Get intensity level based on problem count
+    // Generate 5 months of days (compact grid)
+    const generateCompactGrid = () => {
+        const today = new Date();
+        const startMonth = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+        const endMonth = new Date(today.getFullYear(), today.getMonth() + 2 + 1, 0);
+        
+        const days = [];
+        const monthLabels = [];
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        
+        let currentDate = new Date(startMonth);
+        let weekCount = 0;
+        let lastMonth = -1;
+        
+        const firstDayOfWeek = (currentDate.getDay() + 6) % 7;
+        currentDate.setDate(currentDate.getDate() - firstDayOfWeek);
+        
+        while (currentDate <= endMonth) {
+            const week = [];
+            
+            for (let i = 0; i < 7; i++) {
+                const day = new Date(currentDate);
+                const isInRange = day >= startMonth && day <= endMonth;
+                
+                week.push({
+                    date: day,
+                    dateKey: day.toDateString(),
+                    isInRange: isInRange,
+                    isToday: day.toDateString() === today.toDateString()
+                });
+                
+                if (isInRange && day.getMonth() !== lastMonth && day.getDate() <= 7) {
+                    monthLabels.push({
+                        name: monthNames[day.getMonth()],
+                        weekIndex: weekCount,
+                        month: day.getMonth(),
+                        year: day.getFullYear()
+                    });
+                    lastMonth = day.getMonth();
+                }
+                
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            
+            days.push(week);
+            weekCount++;
+        }
+        
+        return { weeks: days, monthLabels };
+    };
+
+    // Get intensity and color - FIXED for consistent dark mode
     const getIntensity = (count) => {
         if (count === 0) return 0;
         if (count <= 2) return 1;
@@ -48,229 +93,210 @@ const ActivityHeatmap = React.memo(({ problems, isDarkMode }) => {
         return 4;
     };
 
-    // Simplified color scheme that works reliably
     const getColorClass = (intensity) => {
         if (isDarkMode) {
             const colors = [
-                'bg-gray-800 border-gray-700', // 0 contributions
-                'bg-green-900 border-green-800', // 1-2 contributions
-                'bg-green-700 border-green-600', // 3-4 contributions
-                'bg-green-500 border-green-400', // 5-7 contributions
-                'bg-green-400 border-green-300'  // 8+ contributions
+                'bg-gray-700 border-gray-600', // Level 0 - no activity
+                'bg-green-900 border-green-800', // Level 1 - low activity
+                'bg-green-700 border-green-600', // Level 2 - medium-low activity
+                'bg-green-500 border-green-400', // Level 3 - medium-high activity
+                'bg-green-400 border-green-300'  // Level 4 - high activity
             ];
             return colors[intensity];
         } else {
             const colors = [
-                'bg-gray-100 border-gray-200', // 0 contributions
-                'bg-green-100 border-green-200', // 1-2 contributions
-                'bg-green-300 border-green-400', // 3-4 contributions
-                'bg-green-500 border-green-600', // 5-7 contributions
-                'bg-green-700 border-green-800'  // 8+ contributions
+                'bg-gray-100 border-gray-200', // Level 0 - no activity
+                'bg-green-100 border-green-200', // Level 1 - low activity
+                'bg-green-300 border-green-400', // Level 2 - medium-low activity
+                'bg-green-500 border-green-600', // Level 3 - medium-high activity
+                'bg-green-600 border-green-700'  // Level 4 - high activity
             ];
             return colors[intensity];
         }
     };
 
-    const days = getThreeMonthsDays();
     const activityData = getActivityData();
-    const totalSolved = problems.filter(p => p.status === 'completed').length;
+    const { weeks, monthLabels } = generateCompactGrid();
     
-    // Group days by weeks starting with Monday
-    const weeks = [];
-    let currentWeek = [];
+    const totalSolved = problems?.filter(p => p.status === 'completed').length || 0;
     
-    days.forEach((day, index) => {
-        if (index === 0) {
-            // Add empty cells for the first week if it doesn't start on Monday
-            const dayOfWeek = (day.getDay() + 6) % 7; // Convert to Monday=0
-            for (let i = 0; i < dayOfWeek; i++) {
-                currentWeek.push(null);
-            }
-        }
-        
-        currentWeek.push(day);
-        
-        if (currentWeek.length === 7) {
-            weeks.push(currentWeek);
-            currentWeek = [];
-        }
-    });
-    
-    // Add remaining days to the last week
-    if (currentWeek.length > 0) {
-        while (currentWeek.length < 7) {
-            currentWeek.push(null);
-        }
-        weeks.push(currentWeek);
-    }
-
-    // Get month labels for the visible period
-    const getVisibleMonths = () => {
-        const months = [];
-        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        
-        if (days.length > 0) {
-            const firstDay = days[0];
-            const lastDay = days[days.length - 1];
-            
-            let currentMonth = firstDay.getMonth();
-            let currentYear = firstDay.getFullYear();
-            
-            while (currentYear < lastDay.getFullYear() || 
-                   (currentYear === lastDay.getFullYear() && currentMonth <= lastDay.getMonth())) {
-                months.push(monthNames[currentMonth]);
-                currentMonth++;
-                if (currentMonth > 11) {
-                    currentMonth = 0;
-                    currentYear++;
-                }
-            }
-        }
-        
-        return months;
-    };
-
-    const visibleMonths = getVisibleMonths();
-    const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-    // Calculate streak
     const getCurrentStreak = () => {
         let streak = 0;
-        const sortedDays = [...days].reverse();
+        const today = new Date();
         
-        for (const day of sortedDays) {
-            const dateKey = day.toDateString();
+        for (let i = 0; i < 365; i++) {
+            const checkDate = new Date(today);
+            checkDate.setDate(today.getDate() - i);
+            const dateKey = checkDate.toDateString();
+            
             if (activityData[dateKey] > 0) {
                 streak++;
-            } else {
+            } else if (i > 0) {
                 break;
             }
         }
         return streak;
     };
 
-    const currentStreak = getCurrentStreak();
-
     return (
-        <div className={`p-4 sm:p-6 rounded-lg shadow transition-colors duration-300 ${
-            isDarkMode ? 'bg-gray-800' : 'bg-white'
+        <div className={`p-4 sm:p-6 rounded-lg shadow transition-all duration-300 border ${
+            isDarkMode 
+                ? 'bg-gray-800 border-gray-700' 
+                : 'bg-white border-gray-200'
         }`}>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+            {/* Header - FIXED text colors */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
                 <div>
-                    <h3 className={`text-lg font-semibold mb-1 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                    <h3 className={`text-lg font-semibold mb-1 transition-colors duration-300 ${
+                        isDarkMode ? 'text-white' : 'text-gray-800'
+                    }`}>
                         Coding Activity
                     </h3>
-                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                        Last 3 months of problem solving
+                    <p className={`text-sm transition-colors duration-300 ${
+                        isDarkMode ? 'text-white' : 'text-gray-600'
+                    }`}>
+                        5-month activity overview
                     </p>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-3 text-sm">
-                    <div className={`px-3 py-1 rounded-full font-medium ${
-                        isDarkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800'
+                <div className="flex gap-2 text-sm">
+                    <div className={`px-3 py-1 rounded-full font-medium border transition-colors duration-300 ${
+                        isDarkMode 
+                            ? 'bg-green-900 text-white border-green-700' 
+                            : 'bg-green-100 text-green-800 border-green-200'
                     }`}>
-                        {totalSolved} problems solved
+                        <span className="font-semibold">{totalSolved}</span> solved
                     </div>
-                    <div className={`px-3 py-1 rounded-full font-medium ${
-                        isDarkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-800'
+                    <div className={`px-3 py-1 rounded-full font-medium border transition-colors duration-300 ${
+                        isDarkMode 
+                            ? 'bg-blue-900 text-white border-blue-700' 
+                            : 'bg-blue-100 text-blue-800 border-blue-200'
                     }`}>
-                        {currentStreak} day streak
+                        <span className="font-semibold">{getCurrentStreak()}</span> day streak
                     </div>
                 </div>
             </div>
-            
-            {/* Heatmap Grid */}
-            <div className="overflow-x-auto">
-                <div className="inline-block min-w-full">
-                    {/* Month labels */}
-                    <div className="flex mb-3 ml-10">
-                        {visibleMonths.map((month, i) => (
-                            <div key={i} className="flex-1 min-w-0">
-                                <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                                    {month}
-                                </span>
+
+            {/* Grid */}
+            <div className="space-y-3">
+                {/* Month Labels - FIXED text colors */}
+                <div className="flex items-center ml-8 relative h-5">
+                    {monthLabels.map((month, index) => (
+                        <div
+                            key={`${month.name}-${month.year}`}
+                            className={`absolute text-xs font-medium transition-colors duration-300 ${
+                                isDarkMode ? 'text-white' : 'text-gray-600'
+                            }`}
+                            style={{ 
+                                left: `${month.weekIndex * 14}px`
+                            }}
+                        >
+                            {month.name}
+                        </div>
+                    ))}
+                </div>
+
+                {/* Days Grid */}
+                <div className="flex gap-1">
+                    {/* Day Labels - FIXED text colors */}
+                    <div className="flex flex-col gap-1 mr-2 text-xs w-6">
+                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => (
+                            <div 
+                                key={day} 
+                                className={`h-3 flex items-center justify-center transition-colors duration-300 ${
+                                    i % 2 === 0 
+                                        ? (isDarkMode ? 'text-white' : 'text-gray-600') 
+                                        : 'text-transparent'
+                                }`}
+                                style={{ fontSize: '10px' }}
+                            >
+                                {i % 2 === 0 ? day.charAt(0) : ''}
                             </div>
                         ))}
                     </div>
-                    
-                    <div className="flex">
-                        {/* Day labels */}
-                        <div className="flex flex-col mr-3">
-                            {dayLabels.map((day, index) => (
-                                <div key={day} className="h-4 mb-1 flex items-center">
-                                    {index % 2 === 0 && (
-                                        <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                            {day}
-                                        </span>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                        
-                        {/* Heatmap cells */}
-                        <div className="flex gap-1">
-                            {weeks.map((week, weekIndex) => (
-                                <div key={weekIndex} className="flex flex-col gap-1">
-                                    {week.map((day, dayIndex) => {
-                                        if (!day) {
-                                            return <div key={dayIndex} className="w-3 h-3" />;
-                                        }
-                                        
-                                        const dateKey = day.toDateString();
-                                        const count = activityData[dateKey] || 0;
-                                        const intensity = getIntensity(count);
-                                        const isToday = day.toDateString() === new Date().toDateString();
-                                        
-                                        return (
-                                            <div
-                                                key={dayIndex}
-                                                className={`w-3 h-3 rounded-sm cursor-pointer transition-all duration-200 hover:scale-110 border ${
-                                                    getColorClass(intensity)
-                                                } ${isToday ? 'ring-2 ring-blue-400' : ''}`}
-                                                title={`${day.toLocaleDateString('en-US', { 
+
+                    {/* Heatmap Squares - FIXED border classes */}
+                    <div className="flex gap-1">
+                        {weeks.map((week, weekIndex) => (
+                            <div key={weekIndex} className="flex flex-col gap-1">
+                                {week.map((day, dayIndex) => {
+                                    const count = day.isInRange ? (activityData[day.dateKey] || 0) : 0;
+                                    const intensity = day.isInRange ? getIntensity(count) : 0;
+                                    
+                                    return (
+                                        <div
+                                            key={`${weekIndex}-${dayIndex}`}
+                                            className={`
+                                                w-3 h-3 rounded-sm cursor-pointer transition-all duration-200 
+                                                hover:scale-110 hover:shadow-sm border
+                                                ${day.isInRange ? getColorClass(intensity) : 'bg-transparent border-transparent'}
+                                                ${day.isToday ? (
+                                                    isDarkMode 
+                                                        ? 'ring-2 ring-blue-400 ring-opacity-60' 
+                                                        : 'ring-2 ring-blue-500 ring-opacity-60'
+                                                ) : ''}
+                                            `}
+                                            title={day.isInRange ? 
+                                                `${day.date.toLocaleDateString('en-US', { 
                                                     weekday: 'long', 
                                                     year: 'numeric', 
                                                     month: 'long', 
                                                     day: 'numeric' 
-                                                })}: ${count} problem${count !== 1 ? 's' : ''} solved`}
-                                            />
-                                        );
-                                    })}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            {/* Legend */}
-            <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-2 text-sm">
-                    <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
-                        Less
-                    </span>
-                    <div className="flex items-center gap-1">
-                        {[0, 1, 2, 3, 4].map(intensity => (
-                            <div
-                                key={intensity}
-                                className={`w-3 h-3 rounded-sm border ${getColorClass(intensity)}`}
-                                title={`${intensity === 0 ? '0' : intensity === 1 ? '1-2' : intensity === 2 ? '3-4' : intensity === 3 ? '5-7' : '8+'} problems`}
-                            />
+                                                })}: ${count} problem${count !== 1 ? 's' : ''} solved` 
+                                                : ''
+                                            }
+                                        />
+                                    );
+                                })}
+                            </div>
                         ))}
                     </div>
-                    <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
-                        More
-                    </span>
                 </div>
-                
-                <div className={`text-xs ${
-                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+
+                {/* Legend - FIXED text colors */}
+                <div className={`flex items-center justify-between pt-3 border-t transition-colors duration-300 ${
+                    isDarkMode ? 'border-gray-700' : 'border-gray-200'
                 }`}>
-                    Week starts on Monday
+                    <div className="flex items-center gap-1.5 text-xs">
+                        <span className={`transition-colors duration-300 ${
+                            isDarkMode ? 'text-white' : 'text-gray-600'
+                        }`}>
+                            Less
+                        </span>
+                        <div className="flex gap-1">
+                            {[0, 1, 2, 3, 4].map(intensity => (
+                                <div
+                                    key={intensity}
+                                    className={`w-3 h-3 rounded-sm border transition-colors duration-300 ${getColorClass(intensity)}`}
+                                />
+                            ))}
+                        </div>
+                        <span className={`transition-colors duration-300 ${
+                            isDarkMode ? 'text-white' : 'text-gray-600'
+                        }`}>
+                            More
+                        </span>
+                    </div>
+                    
+                    <div className={`text-xs transition-colors duration-300 ${
+                        isDarkMode ? 'text-white' : 'text-gray-500'
+                    }`}>
+                        GitHub-style contribution graph
+                    </div>
                 </div>
             </div>
         </div>
     );
 });
+
+
+
+
+
+
+
+
+
+
 
 
 // (Highly Recommended) Component moved outside of the main StudyPlanner component for performance.
