@@ -3,7 +3,33 @@ import { Calendar, CheckCircle, Circle, Plus, BookOpen, Target, Code, Clock, Bel
 import { format, differenceInDays, addDays, parseISO } from 'date-fns';
 import AuthPage from './AuthPage'; // ADD THIS IMPORT AT THE TOP
 import problemsData from './problems.json';
-// LeetCode-style Heatmap Component
+import { useNavigate } from 'react-router-dom'; // Add this import at the top
+
+// Inside your ProblemCard component, add this:
+
+const generateEditorial = async (problemTitle, problemDescription) => {
+  try {
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.REACT_APP_PERPLEXITY_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: "llama-3.1-sonar-small-128k-online",
+        messages: [{
+          role: "user",
+          content: `Generate an editorial for this coding problem: ${problemTitle}. Description: ${problemDescription}`
+        }]
+      })
+    });
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error:', error);
+  }
+};
+
 const ActivityHeatmap = React.memo(({ problems, isDarkMode }) => {
     // Get activity data from completed problems
     const getActivityData = () => {
@@ -369,7 +395,7 @@ const ProblemCard = ({ problem, onToggle, onSaveNote, notes, isDarkMode, getDiff
     const [noteText, setNoteText] = useState(notes[problem.id] || '');
     const [textareaRef, setTextareaRef] = useState(null);
     const hasNotes = notes[problem.id] && notes[problem.id].trim().length > 0;
-
+const navigate = useNavigate(); 
 
     const handleSaveNote = () => {
         onSaveNote(problem.id, noteText);
@@ -457,35 +483,49 @@ const ProblemCard = ({ problem, onToggle, onSaveNote, notes, isDarkMode, getDiff
                 </div>
             </div>
 
-            <div className="flex gap-2 mt-2">
-                {problemUrl && (
-                    <a
-                        href={problemUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm"
-                    >
-                        <Link size={14} />
-                        {problem.leetcodeId ? `LC-${problem.leetcodeId}` : 'Solve'}
-                    </a>
-                )}
-                <button
-                    onClick={handleNotesClick}
-                    className={`flex items-center gap-1 text-sm transition-colors ${
-                        hasNotes
-                            ? 'text-blue-600 hover:text-blue-800'
-                            : isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-800'
-                    }`}
-                >
-                    <Edit size={14} />
-                    {/* --- MODIFIED TEXT --- */}
-                    {/* This text now clearly reflects the toggle action */}
-                    {notesMode === 'none'
-                        ? (hasNotes ? 'View Notes' : 'Add Notes')
-                        : 'Hide Notes'
-                    }
-                </button>
-            </div>
+<div className="flex items-center justify-between mt-3">
+    {/* Left side - Problem links */}
+    <div className="flex items-center gap-3">
+        {problemUrl && (
+            <a
+                href={problemUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm font-medium transition-colors"
+            >
+                <Link size={14} />
+                {problem.leetcodeId ? `LC-${problem.leetcodeId}` : 'Solve'}
+            </a>
+        )}
+        
+        {/* Editorial Button - Internal Navigation */}
+        {problem.leetcodeId && (
+            <button
+                onClick={() => navigate(`/editorial/LC-${problem.leetcodeId}`)}
+                className="text-purple-600 hover:text-purple-800 flex items-center gap-1 text-sm font-medium transition-colors"
+            >
+                <BookOpen size={14} />
+                View Editorial
+            </button>
+        )}
+    </div>
+
+    {/* Right side - Notes button */}
+    <button
+        onClick={handleNotesClick}
+        className={`flex items-center gap-1 text-sm font-medium transition-colors ${
+            hasNotes
+                ? 'text-blue-600 hover:text-blue-800'
+                : isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-800'
+        }`}
+    >
+        <Edit size={14} />
+        {notesMode === 'none'
+            ? (hasNotes ? 'View Notes' : 'Add Notes')
+            : 'Hide Notes'
+        }
+    </button>
+</div>
 
             {/* View Notes Mode */}
             {notesMode === 'view' && hasNotes && (
