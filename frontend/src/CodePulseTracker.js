@@ -4,6 +4,7 @@ import { format, differenceInDays, addDays, parseISO } from 'date-fns';
 import AuthPage from './AuthPage'; // ADD THIS IMPORT AT THE TOP
 import problemsData from './problems.json';
 import { useNavigate } from 'react-router-dom'; // Add this import at the top
+import { links } from './link.js';
 
 // Inside your ProblemCard component, add this:
 
@@ -443,8 +444,8 @@ const navigate = useNavigate();
         }
     };
 
-    const leetcodeUrl = problem.leetcodeId ? `https://leetcode.com/problems/problem-${problem.leetcodeId}/` : null;
-    const problemUrl = problem.customLink || leetcodeUrl;
+    const leetcodeUrl = problem.name ? links[problem.name] : null;
+const problemUrl = problem.customLink || leetcodeUrl;
 
     return (
         <div className={`border rounded-lg p-4 hover:shadow-md transition-all duration-300 ${
